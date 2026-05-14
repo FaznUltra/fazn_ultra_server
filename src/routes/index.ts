@@ -3,10 +3,12 @@ import { healthRouter } from './health.routes';
 import { authRouter } from './auth.routes';
 import { userRouter } from './user.routes';
 import { gameRouter, adminGameRouter } from './game.routes';
+import { webhookRouter } from './webhook.routes';
 
 export const router = Router();
 
 router.use('/health', healthRouter);
+router.use('/webhooks', webhookRouter);
 
 const v1 = Router();
 v1.use('/auth', authRouter);

@@ -15,6 +15,7 @@ export const env = {
   PORT: parseInt(process.env.PORT ?? '3001', 10),
   DATABASE_URL: required('DATABASE_URL'),
   CLERK_SECRET_KEY: required('CLERK_SECRET_KEY'),
+  CLERK_WEBHOOK_SECRET: required('CLERK_WEBHOOK_SECRET'),
 } as const;
 
 export type Env = typeof env;
