@@ -10,17 +10,18 @@
     "migrate": "ts-node src/db/migrate.ts"
   },
   "dependencies": {
-    "@clerk/backend": "^3.4.8",
+    "apple-signin-auth": "^2.0.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-rate-limit": "^8.5.2",
     "express-validator": "^7.1.0",
+    "googleapis": "^171.4.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.12.0",
-    "svix": "^1.93.0"
+    "resend": "^6.12.3"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
