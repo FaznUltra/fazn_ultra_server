@@ -22,18 +22,25 @@ export async function listGames(_req: Request, res: Response, next: NextFunction
   }
 }
 
+export async function listAllGames(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const games = await gameService.listAllGames();
+    res.json({ games });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function createGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   if (!handleValidation(req, res)) return;
   try {
-    if (!(req as any).user) {
-      res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: 'Auth required' } });
-      return;
-    }
-    const { name, platform, thumbnailUrl } = req.body;
+    const { name, category, platforms, thumbnailUrl, scoreType } = req.body;
     const game = await gameService.createGame({
       name,
-      platform,
+      category,
+      platforms,
       thumbnailUrl,
+      scoreType,
       createdBy: (req as any).user.id,
     });
     res.status(201).json({ game });
@@ -42,16 +49,24 @@ export async function createGame(req: Request, res: Response, next: NextFunction
   }
 }
 
-export async function deleteGame(req: Request, res: Response, next: NextFunction): Promise<void> {
-  if (!handleValidation(req, res)) return;
+export async function toggleGame(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const deleted = await gameService.deactivateGame(req.params.id);
-    if (!deleted) {
+    const { active } = req.body;
+    const game = await gameService.toggleGameActive(req.params.id, active);
+    if (!game) {
       res.status(404).json({ error: { code: 'GAME_NOT_FOUND', message: 'Game not found' } });
       return;
     }
-    res.status(204).send();
+    res.json({ game });
   } catch (err) {
     next(err);
   }
+}
+
+export async function getValidOptions(_req: Request, res: Response): Promise<void> {
+  res.json({
+    categories: gameService.VALID_CATEGORIES,
+    platforms: gameService.VALID_PLATFORMS,
+    scoreTypes: gameService.VALID_SCORE_TYPES,
+  });
 }
