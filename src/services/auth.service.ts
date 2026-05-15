@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { pool } from '../db/client';
 import { env } from '../config/env';
 import { sanitizeString } from '../utils/sanitize';
+import { sendOtp } from './otp.service';
 
 const BCRYPT_ROUNDS = process.env.NODE_ENV === 'test' ? 4 : 12;
 const ACCESS_TTL = '15m';
@@ -94,6 +95,10 @@ export async function register(input: {
 
     const accessToken = signAccess(user);
     const refreshToken = await issueRefreshToken(user.id);
+
+    // Send verification OTP — fire and forget so a Resend hiccup doesn't fail registration
+    sendOtp(user.email, 'email_verification').catch(() => {});
+
     return { user, accessToken, refreshToken };
   } catch (err) {
     await client.query('ROLLBACK');
