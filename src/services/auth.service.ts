@@ -90,7 +90,10 @@ export async function register(input: {
       [email, username, firstName, lastName, passwordHash],
     );
     const user = result.rows[0];
-    await client.query('INSERT INTO wallets (user_id) VALUES ($1)', [user.id]);
+    await client.query(
+      'INSERT INTO wallets (user_id) VALUES ($1) ON CONFLICT DO NOTHING',
+      [user.id],
+    );
     await client.query('COMMIT');
 
     const accessToken = signAccess(user);
@@ -236,7 +239,10 @@ export async function findOrCreateOAuthUser(input: {
         [email, username, firstName, lastName, input.provider, input.providerId],
       );
       user = inserted.rows[0];
-      await client.query('INSERT INTO wallets (user_id) VALUES ($1)', [user.id]);
+      await client.query(
+      'INSERT INTO wallets (user_id) VALUES ($1) ON CONFLICT DO NOTHING',
+      [user.id],
+    );
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK');

@@ -9,9 +9,14 @@ export const app = express();
 app.use(helmet());
 app.use(cors());
 
-// Raw body needed for Clerk webhook signature verification
+// Raw body needed for webhook signature verification (Clerk + Paystack).
+// These paths must NOT be JSON-parsed so we can verify the HMAC of the exact bytes.
 app.use('/webhooks', express.raw({ type: 'application/json' }));
-app.use(express.json({ limit: '100kb' }));
+app.use('/api/v1/wallet/webhook', express.raw({ type: '*/*' }));
+app.use((req, res, next) => {
+  if (req.path === '/api/v1/wallet/webhook') return next();
+  return express.json({ limit: '100kb' })(req, res, next);
+});
 
 // Global rate limit — 100 requests per minute per IP
 app.use(

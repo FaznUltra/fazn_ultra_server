@@ -37,6 +37,10 @@ export const env = {
 
   // Frontend deep-link redirect after OAuth
   FRONTEND_REDIRECT_URL: required('FRONTEND_REDIRECT_URL'),
+
+  // Paystack (optional — wallet falls back to mock mode until configured)
+  PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY ?? '',
+  PAYSTACK_CALLBACK_URL: process.env.PAYSTACK_CALLBACK_URL ?? '',
 } as const;
 
 export type Env = typeof env;
