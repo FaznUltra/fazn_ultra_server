@@ -5,6 +5,7 @@ import { oauthRouter } from './oauth.routes';
 import { otpRouter } from './otp.routes';
 import { userRouter } from './user.routes';
 import { gameRouter, adminGameRouter } from './game.routes';
+import { profileRouter } from './profile.routes';
 
 export const router = Router();
 
@@ -15,6 +16,7 @@ v1.use('/auth', authRouter);
 v1.use('/auth/oauth', oauthRouter);
 v1.use('/auth/otp', otpRouter);
 v1.use('/users', userRouter);
+v1.use('/profile', profileRouter);
 v1.use('/games', gameRouter);
 v1.use('/admin/games', adminGameRouter);
 

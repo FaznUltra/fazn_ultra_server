@@ -35,6 +35,12 @@ const strictLimit = rateLimit({
 app.use('/api/v1/auth', strictLimit);
 app.use('/api/v1/admin', strictLimit);
 
+// Stricter limit on profile mutations only (reads stay on the global limit)
+app.use('/api/v1/profile', (req, res, next) => {
+  if (req.method === 'GET') return next();
+  return strictLimit(req, res, next);
+});
+
 app.use(router);
 
 // 404
