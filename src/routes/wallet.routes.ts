@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { body, query } from 'express-validator';
 import {
   getWallet,
@@ -15,6 +15,16 @@ export const walletRouter = Router();
 // ─── Webhook (no auth — verified via Paystack HMAC signature) ─────────────────
 // Raw-body parsing for this path is configured in app.ts.
 walletRouter.post('/webhook', paystackWebhook);
+
+// ─── Paystack redirect (public — browser GET after payment) ──────────────────
+// Paystack redirects here after the user completes payment on their page.
+// We immediately redirect to the app deep link so expo-web-browser can
+// intercept it and close the in-app browser, then the app calls /topup/verify.
+walletRouter.get('/redirect', (req: Request, res: Response) => {
+  const reference = String(req.query.reference ?? req.query.trxref ?? '');
+  // fazn:// is the app scheme registered in app.json
+  res.redirect(302, `fazn://paystack?reference=${encodeURIComponent(reference)}`);
+});
 
 // ─── Authenticated wallet routes ──────────────────────────────────────────────
 walletRouter.use(authMiddleware);
