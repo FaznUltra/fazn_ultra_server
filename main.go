@@ -9,6 +9,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"github.com/olamilekan-fazn/backend/internal/auth"
 	"github.com/olamilekan-fazn/backend/internal/db"
 )
 
@@ -54,8 +55,16 @@ func main() {
 		port = "8000"
 	}
 
+	authHandler := auth.NewHandler(pool)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler(pool))
+
+	// Auth routes
+	mux.HandleFunc("POST /auth/register", authHandler.Register)
+	mux.HandleFunc("POST /auth/login", authHandler.Login)
+	mux.HandleFunc("GET /auth/google", authHandler.GoogleLogin)
+	mux.HandleFunc("GET /auth/google/callback", authHandler.GoogleCallback)
 
 	log.Printf("server starting on port %s", port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
