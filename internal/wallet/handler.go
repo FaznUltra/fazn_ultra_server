@@ -106,9 +106,10 @@ func (h *Handler) InitiateDeposit(w http.ResponseWriter, r *http.Request) {
 	reference := fmt.Sprintf("dep_%s_%d", userID.String()[:8], time.Now().UnixMilli())
 
 	paystackResp, err := h.paystack.InitializeTransaction(paystack.InitializeRequest{
-		Email:      user.Email,
-		AmountKobo: body.AmountKobo,
-		Reference:  reference,
+		Email:       user.Email,
+		AmountKobo:  body.AmountKobo,
+		Reference:   reference,
+		CallbackURL: "https://api.fazn.dev/wallet/deposit/callback",
 	})
 	if err != nil || !paystackResp.Status {
 		respondError(w, http.StatusInternalServerError, "failed to initiate deposit")
@@ -133,6 +134,31 @@ func (h *Handler) InitiateDeposit(w http.ResponseWriter, r *http.Request) {
 			"reference":   reference,
 		},
 	})
+}
+
+// GET /wallet/deposit/callback — Paystack redirects here after payment
+// Verifies the transaction and redirects to app via deep link
+func (h *Handler) DepositCallback(w http.ResponseWriter, r *http.Request) {
+	reference := r.URL.Query().Get("reference")
+	if reference == "" {
+		reference = r.URL.Query().Get("trxref")
+	}
+
+	deepLink := "faznultra://wallet"
+
+	if reference == "" {
+		http.Redirect(w, r, deepLink+"?status=failed&reason=missing_reference", http.StatusTemporaryRedirect)
+		return
+	}
+
+	verification, err := h.paystack.VerifyTransaction(reference)
+	if err != nil || !verification.Status || verification.Data.Status != "success" {
+		http.Redirect(w, r, deepLink+"?status=failed&reference="+reference, http.StatusTemporaryRedirect)
+		return
+	}
+
+	// Wallet is credited via webhook — callback is only for routing user back to app
+	http.Redirect(w, r, deepLink+"?status=success&reference="+reference, http.StatusTemporaryRedirect)
 }
 
 // POST /wallet/paystack/webhook

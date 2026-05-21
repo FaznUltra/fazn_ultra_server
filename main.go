@@ -78,7 +78,8 @@ func main() {
 	mux.HandleFunc("POST /wallet/bank-account", auth.RequireAuth(walletHandler.SaveBankAccount))
 	mux.HandleFunc("GET /wallet/bank-account", auth.RequireAuth(walletHandler.GetBankAccount))
 
-	// Paystack webhook (public — verified by signature)
+	// Paystack public routes (no auth — verified by signature or reference)
+	mux.HandleFunc("GET /wallet/deposit/callback", walletHandler.DepositCallback)
 	mux.HandleFunc("POST /wallet/paystack/webhook", walletHandler.PaystackWebhook)
 
 	log.Printf("server starting on port %s", port)
