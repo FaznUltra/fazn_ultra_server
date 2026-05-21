@@ -31,3 +31,21 @@ RETURNING *;
 
 -- name: SetEmailVerified :exec
 UPDATE users SET email_verified = TRUE, otp_code = NULL, otp_expires_at = NULL WHERE id = $1;
+
+-- name: SetResetToken :exec
+UPDATE users SET reset_token = $2, reset_token_expires_at = $3 WHERE id = $1;
+
+-- name: VerifyResetOTP :one
+UPDATE users
+SET reset_token = $3, reset_token_expires_at = $4, otp_code = NULL, otp_expires_at = NULL
+WHERE email = $1
+  AND otp_code = $2
+  AND otp_expires_at > NOW()
+RETURNING *;
+
+-- name: ResetPassword :one
+UPDATE users
+SET password_hash = $2, reset_token = NULL, reset_token_expires_at = NULL
+WHERE reset_token = $1
+  AND reset_token_expires_at > NOW()
+RETURNING *;

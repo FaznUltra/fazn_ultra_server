@@ -28,13 +28,16 @@ type Querier interface {
 	GetWalletByUserID(ctx context.Context, userID uuid.UUID) (Wallet, error)
 	ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]Transaction, error)
 	LockFunds(ctx context.Context, arg LockFundsParams) (Wallet, error)
+	ResetPassword(ctx context.Context, arg ResetPasswordParams) (User, error)
 	SaveBankAccount(ctx context.Context, arg SaveBankAccountParams) (BankAccount, error)
 	SetEmailVerified(ctx context.Context, id uuid.UUID) error
 	SetOTP(ctx context.Context, arg SetOTPParams) error
+	SetResetToken(ctx context.Context, arg SetResetTokenParams) error
 	UnlockFunds(ctx context.Context, arg UnlockFundsParams) (Wallet, error)
 	UpdateTransactionStatus(ctx context.Context, arg UpdateTransactionStatusParams) (Transaction, error)
 	UsernameExists(ctx context.Context, username string) (bool, error)
 	VerifyEmailOTP(ctx context.Context, arg VerifyEmailOTPParams) (User, error)
+	VerifyResetOTP(ctx context.Context, arg VerifyResetOTPParams) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

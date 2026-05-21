@@ -69,6 +69,9 @@ func main() {
 	mux.HandleFunc("POST /auth/resend-otp", authHandler.ResendOTP)
 	mux.HandleFunc("GET /auth/google", authHandler.GoogleLogin)
 	mux.HandleFunc("GET /auth/google/callback", authHandler.GoogleCallback)
+	mux.HandleFunc("POST /auth/forgot-password", authHandler.ForgotPassword)
+	mux.HandleFunc("POST /auth/verify-reset-otp", authHandler.VerifyResetOTP)
+	mux.HandleFunc("POST /auth/reset-password", authHandler.ResetPassword)
 
 	// Wallet routes (protected)
 	mux.HandleFunc("GET /wallet", auth.RequireAuth(walletHandler.GetWallet))
