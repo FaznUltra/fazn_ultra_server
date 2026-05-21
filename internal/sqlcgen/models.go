@@ -12,13 +12,16 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID      `json:"id"`
-	FirstName    string         `json:"first_name"`
-	LastName     string         `json:"last_name"`
-	Username     string         `json:"username"`
-	Email        string         `json:"email"`
-	PasswordHash sql.NullString `json:"password_hash"`
-	GoogleID     sql.NullString `json:"google_id"`
-	CreatedAt    time.Time      `json:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at"`
+	ID            uuid.UUID      `json:"id"`
+	FirstName     string         `json:"first_name"`
+	LastName      string         `json:"last_name"`
+	Username      string         `json:"username"`
+	Email         string         `json:"email"`
+	PasswordHash  sql.NullString `json:"password_hash"`
+	GoogleID      sql.NullString `json:"google_id"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	EmailVerified bool           `json:"email_verified"`
+	OtpCode       sql.NullString `json:"otp_code"`
+	OtpExpiresAt  sql.NullTime   `json:"otp_expires_at"`
 }

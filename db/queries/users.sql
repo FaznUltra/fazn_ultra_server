@@ -17,3 +17,17 @@ SELECT * FROM users WHERE id = $1 LIMIT 1;
 
 -- name: UsernameExists :one
 SELECT EXISTS(SELECT 1 FROM users WHERE username = $1) AS exists;
+
+-- name: SetOTP :exec
+UPDATE users SET otp_code = $2, otp_expires_at = $3 WHERE id = $1;
+
+-- name: VerifyEmailOTP :one
+UPDATE users
+SET email_verified = TRUE, otp_code = NULL, otp_expires_at = NULL
+WHERE email = $1
+  AND otp_code = $2
+  AND otp_expires_at > NOW()
+RETURNING *;
+
+-- name: SetEmailVerified :exec
+UPDATE users SET email_verified = TRUE, otp_code = NULL, otp_expires_at = NULL WHERE id = $1;

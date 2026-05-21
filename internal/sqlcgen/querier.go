@@ -17,7 +17,10 @@ type Querier interface {
 	GetUserByGoogleID(ctx context.Context, googleID sql.NullString) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
+	SetEmailVerified(ctx context.Context, id uuid.UUID) error
+	SetOTP(ctx context.Context, arg SetOTPParams) error
 	UsernameExists(ctx context.Context, username string) (bool, error)
+	VerifyEmailOTP(ctx context.Context, arg VerifyEmailOTPParams) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

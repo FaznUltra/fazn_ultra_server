@@ -87,6 +87,11 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := h.sendOTP(ctx, user.ID, user.Email, user.FirstName); err != nil {
+		respondError(w, http.StatusInternalServerError, "account created but failed to send verification email")
+		return
+	}
+
 	token, err := GenerateToken(user.ID)
 	if err != nil {
 		respondError(w, http.StatusInternalServerError, "server error")
@@ -94,10 +99,93 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondJSON(w, http.StatusCreated, map[string]interface{}{
+		"status":  "success",
+		"message": "verification code sent to your email",
+		"token":   token,
+		"user":    safeUser(user),
+	})
+}
+
+// POST /auth/verify-email
+func (h *Handler) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Email string `json:"email"`
+		Code  string `json:"code"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	body.Email = strings.ToLower(strings.TrimSpace(body.Email))
+
+	if body.Email == "" || body.Code == "" {
+		respondError(w, http.StatusBadRequest, "email and code are required")
+		return
+	}
+
+	ctx := r.Context()
+
+	user, err := h.queries.VerifyEmailOTP(ctx, sqlcgen.VerifyEmailOTPParams{
+		Email:   body.Email,
+		OtpCode: sql.NullString{String: body.Code, Valid: true},
+	})
+	if err != nil {
+		respondError(w, http.StatusBadRequest, "invalid or expired code")
+		return
+	}
+
+	token, err := GenerateToken(user.ID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, "server error")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"status": "success",
 		"token":  token,
 		"user":   safeUser(user),
 	})
+}
+
+// POST /auth/resend-otp
+func (h *Handler) ResendOTP(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Email string `json:"email"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	body.Email = strings.ToLower(strings.TrimSpace(body.Email))
+	if body.Email == "" {
+		respondError(w, http.StatusBadRequest, "email is required")
+		return
+	}
+
+	ctx := r.Context()
+
+	user, err := h.queries.GetUserByEmail(ctx, body.Email)
+	if err != nil {
+		// Don't reveal whether email exists
+		respondJSON(w, http.StatusOK, map[string]string{"status": "success", "message": "if that email exists, a code was sent"})
+		return
+	}
+
+	if user.EmailVerified {
+		respondError(w, http.StatusBadRequest, "email already verified")
+		return
+	}
+
+	if err := h.sendOTP(ctx, user.ID, user.Email, user.FirstName); err != nil {
+		respondError(w, http.StatusInternalServerError, "failed to send verification email")
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]string{"status": "success", "message": "verification code sent"})
 }
 
 // POST /auth/login
@@ -134,6 +222,11 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash.String), []byte(body.Password)); err != nil {
 		respondError(w, http.StatusUnauthorized, "invalid credentials")
+		return
+	}
+
+	if !user.EmailVerified {
+		respondError(w, http.StatusForbidden, "email not verified — check your inbox for the verification code")
 		return
 	}
 
@@ -174,7 +267,7 @@ func (h *Handler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.queries.GetUserByGoogleID(ctx, sql.NullString{String: googleUser.ID, Valid: true})
 	if err != nil {
-		// New Google user — create account
+		// New Google user — create account, email pre-verified
 		username, err := GenerateUniqueUsername(ctx, h.queries, googleUser.GivenName, googleUser.FamilyName)
 		if err != nil {
 			respondError(w, http.StatusInternalServerError, "server error")
@@ -197,6 +290,9 @@ func (h *Handler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 			respondError(w, http.StatusInternalServerError, "server error")
 			return
 		}
+
+		// Mark email verified immediately for Google users
+		h.queries.SetEmailVerified(ctx, user.ID)
 	}
 
 	token, err := GenerateToken(user.ID)

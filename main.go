@@ -63,6 +63,8 @@ func main() {
 	// Auth routes
 	mux.HandleFunc("POST /auth/register", authHandler.Register)
 	mux.HandleFunc("POST /auth/login", authHandler.Login)
+	mux.HandleFunc("POST /auth/verify-email", authHandler.VerifyEmail)
+	mux.HandleFunc("POST /auth/resend-otp", authHandler.ResendOTP)
 	mux.HandleFunc("GET /auth/google", authHandler.GoogleLogin)
 	mux.HandleFunc("GET /auth/google/callback", authHandler.GoogleCallback)
 

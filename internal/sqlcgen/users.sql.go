@@ -15,7 +15,7 @@ import (
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (first_name, last_name, username, email, password_hash, google_id)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at
+RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at
 `
 
 type CreateUserParams struct {
@@ -47,12 +47,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.GoogleID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EmailVerified,
+		&i.OtpCode,
+		&i.OtpExpiresAt,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at FROM users WHERE email = $1 LIMIT 1
+SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at FROM users WHERE email = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -68,12 +71,15 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.GoogleID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EmailVerified,
+		&i.OtpCode,
+		&i.OtpExpiresAt,
 	)
 	return i, err
 }
 
 const getUserByGoogleID = `-- name: GetUserByGoogleID :one
-SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at FROM users WHERE google_id = $1 LIMIT 1
+SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at FROM users WHERE google_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID sql.NullString) (User, error) {
@@ -89,12 +95,15 @@ func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID sql.NullString
 		&i.GoogleID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EmailVerified,
+		&i.OtpCode,
+		&i.OtpExpiresAt,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at FROM users WHERE id = $1 LIMIT 1
+SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at FROM users WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
@@ -110,12 +119,15 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.GoogleID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EmailVerified,
+		&i.OtpCode,
+		&i.OtpExpiresAt,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at FROM users WHERE username = $1 LIMIT 1
+SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at FROM users WHERE username = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -131,8 +143,35 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.GoogleID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.EmailVerified,
+		&i.OtpCode,
+		&i.OtpExpiresAt,
 	)
 	return i, err
+}
+
+const setEmailVerified = `-- name: SetEmailVerified :exec
+UPDATE users SET email_verified = TRUE, otp_code = NULL, otp_expires_at = NULL WHERE id = $1
+`
+
+func (q *Queries) SetEmailVerified(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, setEmailVerified, id)
+	return err
+}
+
+const setOTP = `-- name: SetOTP :exec
+UPDATE users SET otp_code = $2, otp_expires_at = $3 WHERE id = $1
+`
+
+type SetOTPParams struct {
+	ID           uuid.UUID      `json:"id"`
+	OtpCode      sql.NullString `json:"otp_code"`
+	OtpExpiresAt sql.NullTime   `json:"otp_expires_at"`
+}
+
+func (q *Queries) SetOTP(ctx context.Context, arg SetOTPParams) error {
+	_, err := q.db.ExecContext(ctx, setOTP, arg.ID, arg.OtpCode, arg.OtpExpiresAt)
+	return err
 }
 
 const usernameExists = `-- name: UsernameExists :one
@@ -144,4 +183,38 @@ func (q *Queries) UsernameExists(ctx context.Context, username string) (bool, er
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const verifyEmailOTP = `-- name: VerifyEmailOTP :one
+UPDATE users
+SET email_verified = TRUE, otp_code = NULL, otp_expires_at = NULL
+WHERE email = $1
+  AND otp_code = $2
+  AND otp_expires_at > NOW()
+RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at
+`
+
+type VerifyEmailOTPParams struct {
+	Email   string         `json:"email"`
+	OtpCode sql.NullString `json:"otp_code"`
+}
+
+func (q *Queries) VerifyEmailOTP(ctx context.Context, arg VerifyEmailOTPParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, verifyEmailOTP, arg.Email, arg.OtpCode)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.GoogleID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.EmailVerified,
+		&i.OtpCode,
+		&i.OtpExpiresAt,
+	)
+	return i, err
 }

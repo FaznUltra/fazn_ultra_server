@@ -8,22 +8,24 @@ import (
 )
 
 type safeUserResponse struct {
-	ID        string `json:"id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Username  string `json:"username"`
-	Email     string `json:"email"`
-	CreatedAt string `json:"created_at"`
+	ID            string `json:"id"`
+	FirstName     string `json:"first_name"`
+	LastName      string `json:"last_name"`
+	Username      string `json:"username"`
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"email_verified"`
+	CreatedAt     string `json:"created_at"`
 }
 
 func safeUser(u sqlcgen.User) safeUserResponse {
 	return safeUserResponse{
-		ID:        u.ID.String(),
-		FirstName: u.FirstName,
-		LastName:  u.LastName,
-		Username:  u.Username,
-		Email:     u.Email,
-		CreatedAt: u.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		ID:            u.ID.String(),
+		FirstName:     u.FirstName,
+		LastName:      u.LastName,
+		Username:      u.Username,
+		Email:         u.Email,
+		EmailVerified: u.EmailVerified,
+		CreatedAt:     u.CreatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 }
 
