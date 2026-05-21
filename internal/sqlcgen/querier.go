@@ -34,6 +34,7 @@ type Querier interface {
 	SetOTP(ctx context.Context, arg SetOTPParams) error
 	SetResetToken(ctx context.Context, arg SetResetTokenParams) error
 	UnlockFunds(ctx context.Context, arg UnlockFundsParams) (Wallet, error)
+	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (User, error)
 	UpdateTransactionStatus(ctx context.Context, arg UpdateTransactionStatusParams) (Transaction, error)
 	UsernameExists(ctx context.Context, username string) (bool, error)
 	VerifyEmailOTP(ctx context.Context, arg VerifyEmailOTPParams) (User, error)

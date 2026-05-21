@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/olamilekan-fazn/backend/internal/auth"
 	"github.com/olamilekan-fazn/backend/internal/db"
+	"github.com/olamilekan-fazn/backend/internal/profile"
 	"github.com/olamilekan-fazn/backend/internal/wallet"
 )
 
@@ -58,6 +59,7 @@ func main() {
 
 	authHandler := auth.NewHandler(pool)
 	walletHandler := wallet.NewHandler(pool)
+	profileHandler := profile.NewHandler(pool)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler(pool))
@@ -80,6 +82,12 @@ func main() {
 	mux.HandleFunc("GET /wallet/transactions", auth.RequireAuth(walletHandler.ListTransactions))
 	mux.HandleFunc("POST /wallet/bank-account", auth.RequireAuth(walletHandler.SaveBankAccount))
 	mux.HandleFunc("GET /wallet/bank-account", auth.RequireAuth(walletHandler.GetBankAccount))
+
+	// Profile routes (protected)
+	mux.HandleFunc("GET /profile/me", auth.RequireAuth(profileHandler.GetMyProfile))
+	mux.HandleFunc("PATCH /profile/me", auth.RequireAuth(profileHandler.UpdateMyProfile))
+	mux.HandleFunc("POST /profile/avatar/upload-url", auth.RequireAuth(profileHandler.GetAvatarUploadURL))
+	mux.HandleFunc("GET /profile/{username}", profileHandler.GetPublicProfile)
 
 	// Paystack public routes (no auth — verified by signature or reference)
 	mux.HandleFunc("GET /wallet/deposit/callback", walletHandler.DepositCallback)

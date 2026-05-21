@@ -14,6 +14,49 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+type GamePreference string
+
+const (
+	GamePreferenceEFOOTBALL GamePreference = "EFOOTBALL"
+	GamePreferenceDLS       GamePreference = "DLS"
+	GamePreferenceBOTH      GamePreference = "BOTH"
+)
+
+func (e *GamePreference) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = GamePreference(s)
+	case string:
+		*e = GamePreference(s)
+	default:
+		return fmt.Errorf("unsupported scan type for GamePreference: %T", src)
+	}
+	return nil
+}
+
+type NullGamePreference struct {
+	GamePreference GamePreference `json:"game_preference"`
+	Valid          bool           `json:"valid"` // Valid is true if GamePreference is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullGamePreference) Scan(value interface{}) error {
+	if value == nil {
+		ns.GamePreference, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.GamePreference.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullGamePreference) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.GamePreference), nil
+}
+
 type TransactionStatus string
 
 const (
@@ -147,6 +190,9 @@ type User struct {
 	OtpExpiresAt        sql.NullTime   `json:"otp_expires_at"`
 	ResetToken          sql.NullString `json:"reset_token"`
 	ResetTokenExpiresAt sql.NullTime   `json:"reset_token_expires_at"`
+	AvatarUrl           sql.NullString `json:"avatar_url"`
+	Bio                 sql.NullString `json:"bio"`
+	GamePreference      GamePreference `json:"game_preference"`
 }
 
 type Wallet struct {

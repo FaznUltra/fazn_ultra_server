@@ -15,7 +15,7 @@ import (
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (first_name, last_name, username, email, password_hash, google_id)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at
+RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference
 `
 
 type CreateUserParams struct {
@@ -52,12 +52,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.OtpExpiresAt,
 		&i.ResetToken,
 		&i.ResetTokenExpiresAt,
+		&i.AvatarUrl,
+		&i.Bio,
+		&i.GamePreference,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at FROM users WHERE email = $1 LIMIT 1
+SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference FROM users WHERE email = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -78,12 +81,15 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.OtpExpiresAt,
 		&i.ResetToken,
 		&i.ResetTokenExpiresAt,
+		&i.AvatarUrl,
+		&i.Bio,
+		&i.GamePreference,
 	)
 	return i, err
 }
 
 const getUserByGoogleID = `-- name: GetUserByGoogleID :one
-SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at FROM users WHERE google_id = $1 LIMIT 1
+SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference FROM users WHERE google_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID sql.NullString) (User, error) {
@@ -104,12 +110,15 @@ func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID sql.NullString
 		&i.OtpExpiresAt,
 		&i.ResetToken,
 		&i.ResetTokenExpiresAt,
+		&i.AvatarUrl,
+		&i.Bio,
+		&i.GamePreference,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at FROM users WHERE id = $1 LIMIT 1
+SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference FROM users WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
@@ -130,12 +139,15 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.OtpExpiresAt,
 		&i.ResetToken,
 		&i.ResetTokenExpiresAt,
+		&i.AvatarUrl,
+		&i.Bio,
+		&i.GamePreference,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at FROM users WHERE username = $1 LIMIT 1
+SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference FROM users WHERE username = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -156,6 +168,9 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.OtpExpiresAt,
 		&i.ResetToken,
 		&i.ResetTokenExpiresAt,
+		&i.AvatarUrl,
+		&i.Bio,
+		&i.GamePreference,
 	)
 	return i, err
 }
@@ -165,7 +180,7 @@ UPDATE users
 SET password_hash = $2, reset_token = NULL, reset_token_expires_at = NULL
 WHERE reset_token = $1
   AND reset_token_expires_at > NOW()
-RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at
+RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference
 `
 
 type ResetPasswordParams struct {
@@ -191,6 +206,9 @@ func (q *Queries) ResetPassword(ctx context.Context, arg ResetPasswordParams) (U
 		&i.OtpExpiresAt,
 		&i.ResetToken,
 		&i.ResetTokenExpiresAt,
+		&i.AvatarUrl,
+		&i.Bio,
+		&i.GamePreference,
 	)
 	return i, err
 }
@@ -234,6 +252,53 @@ func (q *Queries) SetResetToken(ctx context.Context, arg SetResetTokenParams) er
 	return err
 }
 
+const updateProfile = `-- name: UpdateProfile :one
+UPDATE users
+SET
+    bio             = COALESCE($2, bio),
+    avatar_url      = COALESCE($3, avatar_url),
+    game_preference = COALESCE($4, game_preference)
+WHERE id = $1
+RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference
+`
+
+type UpdateProfileParams struct {
+	ID             uuid.UUID      `json:"id"`
+	Bio            sql.NullString `json:"bio"`
+	AvatarUrl      sql.NullString `json:"avatar_url"`
+	GamePreference GamePreference `json:"game_preference"`
+}
+
+func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateProfile,
+		arg.ID,
+		arg.Bio,
+		arg.AvatarUrl,
+		arg.GamePreference,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.GoogleID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.EmailVerified,
+		&i.OtpCode,
+		&i.OtpExpiresAt,
+		&i.ResetToken,
+		&i.ResetTokenExpiresAt,
+		&i.AvatarUrl,
+		&i.Bio,
+		&i.GamePreference,
+	)
+	return i, err
+}
+
 const usernameExists = `-- name: UsernameExists :one
 SELECT EXISTS(SELECT 1 FROM users WHERE username = $1) AS exists
 `
@@ -251,7 +316,7 @@ SET email_verified = TRUE, otp_code = NULL, otp_expires_at = NULL
 WHERE email = $1
   AND otp_code = $2
   AND otp_expires_at > NOW()
-RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at
+RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference
 `
 
 type VerifyEmailOTPParams struct {
@@ -277,6 +342,9 @@ func (q *Queries) VerifyEmailOTP(ctx context.Context, arg VerifyEmailOTPParams) 
 		&i.OtpExpiresAt,
 		&i.ResetToken,
 		&i.ResetTokenExpiresAt,
+		&i.AvatarUrl,
+		&i.Bio,
+		&i.GamePreference,
 	)
 	return i, err
 }
@@ -287,7 +355,7 @@ SET reset_token = $3, reset_token_expires_at = $4, otp_code = NULL, otp_expires_
 WHERE email = $1
   AND otp_code = $2
   AND otp_expires_at > NOW()
-RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at
+RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference
 `
 
 type VerifyResetOTPParams struct {
@@ -320,6 +388,9 @@ func (q *Queries) VerifyResetOTP(ctx context.Context, arg VerifyResetOTPParams) 
 		&i.OtpExpiresAt,
 		&i.ResetToken,
 		&i.ResetTokenExpiresAt,
+		&i.AvatarUrl,
+		&i.Bio,
+		&i.GamePreference,
 	)
 	return i, err
 }

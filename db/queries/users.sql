@@ -32,6 +32,15 @@ RETURNING *;
 -- name: SetEmailVerified :exec
 UPDATE users SET email_verified = TRUE, otp_code = NULL, otp_expires_at = NULL WHERE id = $1;
 
+-- name: UpdateProfile :one
+UPDATE users
+SET
+    bio             = COALESCE($2, bio),
+    avatar_url      = COALESCE($3, avatar_url),
+    game_preference = COALESCE($4, game_preference)
+WHERE id = $1
+RETURNING *;
+
 -- name: SetResetToken :exec
 UPDATE users SET reset_token = $2, reset_token_expires_at = $3 WHERE id = $1;
 
