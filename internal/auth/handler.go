@@ -87,6 +87,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.queries.CreateWallet(ctx, user.ID)
+
 	if err := h.sendOTP(ctx, user.ID, user.Email, user.FirstName); err != nil {
 		respondError(w, http.StatusInternalServerError, "account created but failed to send verification email")
 		return
@@ -293,6 +295,7 @@ func (h *Handler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 
 		// Mark email verified immediately for Google users
 		h.queries.SetEmailVerified(ctx, user.ID)
+		h.queries.CreateWallet(ctx, user.ID)
 	}
 
 	token, err := GenerateToken(user.ID)

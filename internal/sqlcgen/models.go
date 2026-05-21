@@ -6,10 +6,131 @@ package sqlcgen
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 )
+
+type TransactionStatus string
+
+const (
+	TransactionStatusPENDING     TransactionStatus = "PENDING"
+	TransactionStatusCOMPLETED   TransactionStatus = "COMPLETED"
+	TransactionStatusFAILED      TransactionStatus = "FAILED"
+	TransactionStatusUNDERREVIEW TransactionStatus = "UNDER_REVIEW"
+)
+
+func (e *TransactionStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = TransactionStatus(s)
+	case string:
+		*e = TransactionStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for TransactionStatus: %T", src)
+	}
+	return nil
+}
+
+type NullTransactionStatus struct {
+	TransactionStatus TransactionStatus `json:"transaction_status"`
+	Valid             bool              `json:"valid"` // Valid is true if TransactionStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullTransactionStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.TransactionStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.TransactionStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullTransactionStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.TransactionStatus), nil
+}
+
+type TransactionType string
+
+const (
+	TransactionTypeDEPOSIT            TransactionType = "DEPOSIT"
+	TransactionTypeWITHDRAWAL         TransactionType = "WITHDRAWAL"
+	TransactionTypeCHALLENGESTAKE     TransactionType = "CHALLENGE_STAKE"
+	TransactionTypeCHALLENGEREFUND    TransactionType = "CHALLENGE_REFUND"
+	TransactionTypeCHALLENGEWINNINGS  TransactionType = "CHALLENGE_WINNINGS"
+	TransactionTypePLATFORMFEE        TransactionType = "PLATFORM_FEE"
+	TransactionTypeTOURNAMENTENTRY    TransactionType = "TOURNAMENT_ENTRY"
+	TransactionTypeTOURNAMENTWINNINGS TransactionType = "TOURNAMENT_WINNINGS"
+	TransactionTypeDISPUTEFREEZE      TransactionType = "DISPUTE_FREEZE"
+	TransactionTypeADMINCREDIT        TransactionType = "ADMIN_CREDIT"
+	TransactionTypeADMINDEBIT         TransactionType = "ADMIN_DEBIT"
+)
+
+func (e *TransactionType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = TransactionType(s)
+	case string:
+		*e = TransactionType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for TransactionType: %T", src)
+	}
+	return nil
+}
+
+type NullTransactionType struct {
+	TransactionType TransactionType `json:"transaction_type"`
+	Valid           bool            `json:"valid"` // Valid is true if TransactionType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullTransactionType) Scan(value interface{}) error {
+	if value == nil {
+		ns.TransactionType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.TransactionType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullTransactionType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.TransactionType), nil
+}
+
+type BankAccount struct {
+	ID                    uuid.UUID `json:"id"`
+	UserID                uuid.UUID `json:"user_id"`
+	BankName              string    `json:"bank_name"`
+	BankCode              string    `json:"bank_code"`
+	AccountNumber         string    `json:"account_number"`
+	AccountName           string    `json:"account_name"`
+	PaystackRecipientCode string    `json:"paystack_recipient_code"`
+	CreatedAt             time.Time `json:"created_at"`
+}
+
+type Transaction struct {
+	ID        uuid.UUID             `json:"id"`
+	UserID    uuid.UUID             `json:"user_id"`
+	Type      TransactionType       `json:"type"`
+	Amount    int64                 `json:"amount"`
+	Status    TransactionStatus     `json:"status"`
+	Reference string                `json:"reference"`
+	Metadata  pqtype.NullRawMessage `json:"metadata"`
+	CreatedAt time.Time             `json:"created_at"`
+	UpdatedAt time.Time             `json:"updated_at"`
+}
 
 type User struct {
 	ID            uuid.UUID      `json:"id"`
@@ -24,4 +145,13 @@ type User struct {
 	EmailVerified bool           `json:"email_verified"`
 	OtpCode       sql.NullString `json:"otp_code"`
 	OtpExpiresAt  sql.NullTime   `json:"otp_expires_at"`
+}
+
+type Wallet struct {
+	ID               uuid.UUID `json:"id"`
+	UserID           uuid.UUID `json:"user_id"`
+	AvailableBalance int64     `json:"available_balance"`
+	LockedBalance    int64     `json:"locked_balance"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }

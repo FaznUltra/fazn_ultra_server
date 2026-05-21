@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/olamilekan-fazn/backend/internal/auth"
 	"github.com/olamilekan-fazn/backend/internal/db"
+	"github.com/olamilekan-fazn/backend/internal/wallet"
 )
 
 type HealthResponse struct {
@@ -56,17 +57,29 @@ func main() {
 	}
 
 	authHandler := auth.NewHandler(pool)
+	walletHandler := wallet.NewHandler(pool)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler(pool))
 
-	// Auth routes
+	// Auth routes (public)
 	mux.HandleFunc("POST /auth/register", authHandler.Register)
 	mux.HandleFunc("POST /auth/login", authHandler.Login)
 	mux.HandleFunc("POST /auth/verify-email", authHandler.VerifyEmail)
 	mux.HandleFunc("POST /auth/resend-otp", authHandler.ResendOTP)
 	mux.HandleFunc("GET /auth/google", authHandler.GoogleLogin)
 	mux.HandleFunc("GET /auth/google/callback", authHandler.GoogleCallback)
+
+	// Wallet routes (protected)
+	mux.HandleFunc("GET /wallet", auth.RequireAuth(walletHandler.GetWallet))
+	mux.HandleFunc("POST /wallet/deposit", auth.RequireAuth(walletHandler.InitiateDeposit))
+	mux.HandleFunc("POST /wallet/withdraw", auth.RequireAuth(walletHandler.Withdraw))
+	mux.HandleFunc("GET /wallet/transactions", auth.RequireAuth(walletHandler.ListTransactions))
+	mux.HandleFunc("POST /wallet/bank-account", auth.RequireAuth(walletHandler.SaveBankAccount))
+	mux.HandleFunc("GET /wallet/bank-account", auth.RequireAuth(walletHandler.GetBankAccount))
+
+	// Paystack webhook (public — verified by signature)
+	mux.HandleFunc("POST /wallet/paystack/webhook", walletHandler.PaystackWebhook)
 
 	log.Printf("server starting on port %s", port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {

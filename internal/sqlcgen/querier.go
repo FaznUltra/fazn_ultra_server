@@ -12,13 +12,27 @@ import (
 )
 
 type Querier interface {
+	CountTransactions(ctx context.Context, arg CountTransactionsParams) (int64, error)
+	CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateWallet(ctx context.Context, userID uuid.UUID) (Wallet, error)
+	CreditAvailable(ctx context.Context, arg CreditAvailableParams) (Wallet, error)
+	DebitAvailable(ctx context.Context, arg DebitAvailableParams) (Wallet, error)
+	DeductLocked(ctx context.Context, arg DeductLockedParams) (Wallet, error)
+	GetBankAccount(ctx context.Context, userID uuid.UUID) (BankAccount, error)
+	GetTransactionByReference(ctx context.Context, reference string) (Transaction, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByGoogleID(ctx context.Context, googleID sql.NullString) (User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
+	GetWalletByUserID(ctx context.Context, userID uuid.UUID) (Wallet, error)
+	ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]Transaction, error)
+	LockFunds(ctx context.Context, arg LockFundsParams) (Wallet, error)
+	SaveBankAccount(ctx context.Context, arg SaveBankAccountParams) (BankAccount, error)
 	SetEmailVerified(ctx context.Context, id uuid.UUID) error
 	SetOTP(ctx context.Context, arg SetOTPParams) error
+	UnlockFunds(ctx context.Context, arg UnlockFundsParams) (Wallet, error)
+	UpdateTransactionStatus(ctx context.Context, arg UpdateTransactionStatusParams) (Transaction, error)
 	UsernameExists(ctx context.Context, username string) (bool, error)
 	VerifyEmailOTP(ctx context.Context, arg VerifyEmailOTPParams) (User, error)
 }
