@@ -150,6 +150,49 @@ func (ns NullChallengeType) Value() (driver.Value, error) {
 	return string(ns.ChallengeType), nil
 }
 
+type FriendshipStatus string
+
+const (
+	FriendshipStatusPENDING  FriendshipStatus = "PENDING"
+	FriendshipStatusACCEPTED FriendshipStatus = "ACCEPTED"
+	FriendshipStatusDECLINED FriendshipStatus = "DECLINED"
+)
+
+func (e *FriendshipStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = FriendshipStatus(s)
+	case string:
+		*e = FriendshipStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for FriendshipStatus: %T", src)
+	}
+	return nil
+}
+
+type NullFriendshipStatus struct {
+	FriendshipStatus FriendshipStatus `json:"friendship_status"`
+	Valid            bool             `json:"valid"` // Valid is true if FriendshipStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullFriendshipStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.FriendshipStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.FriendshipStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullFriendshipStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.FriendshipStatus), nil
+}
+
 type GamePreference string
 
 const (
@@ -336,6 +379,15 @@ type Challenge struct {
 	UpdatedAt          time.Time       `json:"updated_at"`
 }
 
+type Friendship struct {
+	ID          uuid.UUID        `json:"id"`
+	RequesterID uuid.UUID        `json:"requester_id"`
+	AddresseeID uuid.UUID        `json:"addressee_id"`
+	Status      FriendshipStatus `json:"status"`
+	CreatedAt   time.Time        `json:"created_at"`
+	UpdatedAt   time.Time        `json:"updated_at"`
+}
+
 type Transaction struct {
 	ID        uuid.UUID             `json:"id"`
 	UserID    uuid.UUID             `json:"user_id"`
@@ -366,6 +418,7 @@ type User struct {
 	AvatarUrl           sql.NullString `json:"avatar_url"`
 	Bio                 sql.NullString `json:"bio"`
 	GamePreference      GamePreference `json:"game_preference"`
+	LastSeenAt          sql.NullTime   `json:"last_seen_at"`
 }
 
 type Wallet struct {

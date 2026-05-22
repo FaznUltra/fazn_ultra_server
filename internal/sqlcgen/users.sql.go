@@ -15,7 +15,7 @@ import (
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (first_name, last_name, username, email, password_hash, google_id)
 VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference
+RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference, last_seen_at
 `
 
 type CreateUserParams struct {
@@ -55,12 +55,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.AvatarUrl,
 		&i.Bio,
 		&i.GamePreference,
+		&i.LastSeenAt,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference FROM users WHERE email = $1 LIMIT 1
+SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference, last_seen_at FROM users WHERE email = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -84,12 +85,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.AvatarUrl,
 		&i.Bio,
 		&i.GamePreference,
+		&i.LastSeenAt,
 	)
 	return i, err
 }
 
 const getUserByGoogleID = `-- name: GetUserByGoogleID :one
-SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference FROM users WHERE google_id = $1 LIMIT 1
+SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference, last_seen_at FROM users WHERE google_id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID sql.NullString) (User, error) {
@@ -113,12 +115,13 @@ func (q *Queries) GetUserByGoogleID(ctx context.Context, googleID sql.NullString
 		&i.AvatarUrl,
 		&i.Bio,
 		&i.GamePreference,
+		&i.LastSeenAt,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference FROM users WHERE id = $1 LIMIT 1
+SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference, last_seen_at FROM users WHERE id = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
@@ -142,12 +145,13 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.AvatarUrl,
 		&i.Bio,
 		&i.GamePreference,
+		&i.LastSeenAt,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference FROM users WHERE username = $1 LIMIT 1
+SELECT id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference, last_seen_at FROM users WHERE username = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -171,6 +175,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.AvatarUrl,
 		&i.Bio,
 		&i.GamePreference,
+		&i.LastSeenAt,
 	)
 	return i, err
 }
@@ -180,7 +185,7 @@ UPDATE users
 SET password_hash = $2, reset_token = NULL, reset_token_expires_at = NULL
 WHERE reset_token = $1
   AND reset_token_expires_at > NOW()
-RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference
+RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference, last_seen_at
 `
 
 type ResetPasswordParams struct {
@@ -209,6 +214,7 @@ func (q *Queries) ResetPassword(ctx context.Context, arg ResetPasswordParams) (U
 		&i.AvatarUrl,
 		&i.Bio,
 		&i.GamePreference,
+		&i.LastSeenAt,
 	)
 	return i, err
 }
@@ -259,7 +265,7 @@ SET
     avatar_url      = COALESCE($3, avatar_url),
     game_preference = COALESCE($4, game_preference)
 WHERE id = $1
-RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference
+RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference, last_seen_at
 `
 
 type UpdateProfileParams struct {
@@ -295,6 +301,7 @@ func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) (U
 		&i.AvatarUrl,
 		&i.Bio,
 		&i.GamePreference,
+		&i.LastSeenAt,
 	)
 	return i, err
 }
@@ -316,7 +323,7 @@ SET email_verified = TRUE, otp_code = NULL, otp_expires_at = NULL
 WHERE email = $1
   AND otp_code = $2
   AND otp_expires_at > NOW()
-RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference
+RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference, last_seen_at
 `
 
 type VerifyEmailOTPParams struct {
@@ -345,6 +352,7 @@ func (q *Queries) VerifyEmailOTP(ctx context.Context, arg VerifyEmailOTPParams) 
 		&i.AvatarUrl,
 		&i.Bio,
 		&i.GamePreference,
+		&i.LastSeenAt,
 	)
 	return i, err
 }
@@ -355,7 +363,7 @@ SET reset_token = $3, reset_token_expires_at = $4, otp_code = NULL, otp_expires_
 WHERE email = $1
   AND otp_code = $2
   AND otp_expires_at > NOW()
-RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference
+RETURNING id, first_name, last_name, username, email, password_hash, google_id, created_at, updated_at, email_verified, otp_code, otp_expires_at, reset_token, reset_token_expires_at, avatar_url, bio, game_preference, last_seen_at
 `
 
 type VerifyResetOTPParams struct {
@@ -391,6 +399,7 @@ func (q *Queries) VerifyResetOTP(ctx context.Context, arg VerifyResetOTPParams) 
 		&i.AvatarUrl,
 		&i.Bio,
 		&i.GamePreference,
+		&i.LastSeenAt,
 	)
 	return i, err
 }

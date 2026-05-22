@@ -159,3 +159,10 @@ SET status = 'AI_REVIEW', updated_at = NOW()
 WHERE status = 'IN_PROGRESS'
   AND match_deadline < NOW()
 RETURNING *;
+
+-- name: GetActiveChallenge :one
+SELECT id, game, creator_id, creator_playback_id, opponent_playback_id
+FROM challenges
+WHERE status = 'IN_PROGRESS'
+  AND (creator_id = $1 OR opponent_id = $1)
+LIMIT 1;

@@ -13,6 +13,7 @@ import (
 
 type Querier interface {
 	AcceptChallenge(ctx context.Context, arg AcceptChallengeParams) (Challenge, error)
+	AcceptFriendRequest(ctx context.Context, arg AcceptFriendRequestParams) (Friendship, error)
 	AddRejectedBy(ctx context.Context, arg AddRejectedByParams) (Challenge, error)
 	AutoSubmitExpiredMatches(ctx context.Context) ([]Challenge, error)
 	CancelChallenge(ctx context.Context, arg CancelChallengeParams) (Challenge, error)
@@ -24,13 +25,19 @@ type Querier interface {
 	CreateWallet(ctx context.Context, userID uuid.UUID) (Wallet, error)
 	CreditAvailable(ctx context.Context, arg CreditAvailableParams) (Wallet, error)
 	DebitAvailable(ctx context.Context, arg DebitAvailableParams) (Wallet, error)
+	DeclineFriendRequest(ctx context.Context, arg DeclineFriendRequestParams) (Friendship, error)
 	DeductLocked(ctx context.Context, arg DeductLockedParams) (Wallet, error)
 	DisputeChallenge(ctx context.Context, arg DisputeChallengeParams) (Challenge, error)
 	ExpireChallenges(ctx context.Context) ([]Challenge, error)
+	GetActiveChallenge(ctx context.Context, creatorID uuid.UUID) (GetActiveChallengeRow, error)
 	GetBankAccount(ctx context.Context, userID uuid.UUID) (BankAccount, error)
 	GetChallengeByID(ctx context.Context, id uuid.UUID) (Challenge, error)
+	GetFriendIDs(ctx context.Context, requesterID uuid.UUID) ([]uuid.UUID, error)
+	GetFriends(ctx context.Context, requesterID uuid.UUID) ([]GetFriendsRow, error)
+	GetFriendshipBetween(ctx context.Context, arg GetFriendshipBetweenParams) (Friendship, error)
 	GetMyChallenges(ctx context.Context, arg GetMyChallengesParams) ([]Challenge, error)
 	GetOpenLobby(ctx context.Context, arg GetOpenLobbyParams) ([]Challenge, error)
+	GetPendingRequests(ctx context.Context, addresseeID uuid.UUID) ([]GetPendingRequestsRow, error)
 	GetTransactionByReference(ctx context.Context, reference string) (Transaction, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByGoogleID(ctx context.Context, googleID sql.NullString) (User, error)
@@ -39,10 +46,12 @@ type Querier interface {
 	GetWalletByUserID(ctx context.Context, userID uuid.UUID) (Wallet, error)
 	ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]Transaction, error)
 	LockFunds(ctx context.Context, arg LockFundsParams) (Wallet, error)
+	RemoveFriend(ctx context.Context, arg RemoveFriendParams) error
 	ReopenChallenge(ctx context.Context, arg ReopenChallengeParams) (Challenge, error)
 	ResetPassword(ctx context.Context, arg ResetPasswordParams) (User, error)
 	ResolveDispute(ctx context.Context, arg ResolveDisputeParams) (Challenge, error)
 	SaveBankAccount(ctx context.Context, arg SaveBankAccountParams) (BankAccount, error)
+	SendFriendRequest(ctx context.Context, arg SendFriendRequestParams) (Friendship, error)
 	SetCreatorAsset(ctx context.Context, arg SetCreatorAssetParams) error
 	SetCreatorReady(ctx context.Context, arg SetCreatorReadyParams) (Challenge, error)
 	SetEmailVerified(ctx context.Context, id uuid.UUID) error
@@ -54,6 +63,7 @@ type Querier interface {
 	StartChallenge(ctx context.Context, id uuid.UUID) (Challenge, error)
 	SubmitVerdict(ctx context.Context, arg SubmitVerdictParams) (Challenge, error)
 	UnlockFunds(ctx context.Context, arg UnlockFundsParams) (Wallet, error)
+	UpdateLastSeen(ctx context.Context, id uuid.UUID) error
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (User, error)
 	UpdateTransactionStatus(ctx context.Context, arg UpdateTransactionStatusParams) (Transaction, error)
 	UsernameExists(ctx context.Context, username string) (bool, error)

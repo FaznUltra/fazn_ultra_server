@@ -12,6 +12,7 @@ import (
 	"github.com/olamilekan-fazn/backend/internal/auth"
 	"github.com/olamilekan-fazn/backend/internal/challenge"
 	"github.com/olamilekan-fazn/backend/internal/db"
+	"github.com/olamilekan-fazn/backend/internal/friends"
 	"github.com/olamilekan-fazn/backend/internal/profile"
 	"github.com/olamilekan-fazn/backend/internal/wallet"
 )
@@ -62,6 +63,7 @@ func main() {
 	walletHandler := wallet.NewHandler(pool)
 	profileHandler := profile.NewHandler(pool)
 	challengeHandler := challenge.NewHandler(pool, walletHandler)
+	friendsHandler := friends.NewHandler(pool)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler(pool))
@@ -102,6 +104,17 @@ func main() {
 	mux.HandleFunc("POST /challenges/{id}/cancel", auth.RequireAuth(challengeHandler.CancelChallenge))
 	mux.HandleFunc("POST /challenges/{id}/dispute", auth.RequireAuth(challengeHandler.DisputeChallenge))
 	mux.HandleFunc("POST /challenges/{id}/verdict", challengeHandler.SubmitVerdict) // internal only, guarded by X-Internal-Secret
+
+	// Friends routes (protected)
+	mux.HandleFunc("POST /friends/request/{user_id}", auth.RequireAuth(friendsHandler.SendRequest))
+	mux.HandleFunc("POST /friends/accept/{user_id}", auth.RequireAuth(friendsHandler.AcceptRequest))
+	mux.HandleFunc("POST /friends/decline/{user_id}", auth.RequireAuth(friendsHandler.DeclineRequest))
+	mux.HandleFunc("DELETE /friends/{user_id}", auth.RequireAuth(friendsHandler.RemoveFriend))
+	mux.HandleFunc("GET /friends", auth.RequireAuth(friendsHandler.GetFriends))
+	mux.HandleFunc("GET /friends/requests", auth.RequireAuth(friendsHandler.GetPendingRequests))
+
+	// Presence (protected)
+	mux.HandleFunc("POST /presence/ping", auth.RequireAuth(friendsHandler.Ping))
 
 	// Paystack public routes (no auth — verified by signature or reference)
 	mux.HandleFunc("GET /wallet/deposit/callback", walletHandler.DepositCallback)

@@ -493,6 +493,35 @@ func (q *Queries) ExpireChallenges(ctx context.Context) ([]Challenge, error) {
 	return items, nil
 }
 
+const getActiveChallenge = `-- name: GetActiveChallenge :one
+SELECT id, game, creator_id, creator_playback_id, opponent_playback_id
+FROM challenges
+WHERE status = 'IN_PROGRESS'
+  AND (creator_id = $1 OR opponent_id = $1)
+LIMIT 1
+`
+
+type GetActiveChallengeRow struct {
+	ID                 uuid.UUID      `json:"id"`
+	Game               ChallengeGame  `json:"game"`
+	CreatorID          uuid.UUID      `json:"creator_id"`
+	CreatorPlaybackID  sql.NullString `json:"creator_playback_id"`
+	OpponentPlaybackID sql.NullString `json:"opponent_playback_id"`
+}
+
+func (q *Queries) GetActiveChallenge(ctx context.Context, creatorID uuid.UUID) (GetActiveChallengeRow, error) {
+	row := q.db.QueryRowContext(ctx, getActiveChallenge, creatorID)
+	var i GetActiveChallengeRow
+	err := row.Scan(
+		&i.ID,
+		&i.Game,
+		&i.CreatorID,
+		&i.CreatorPlaybackID,
+		&i.OpponentPlaybackID,
+	)
+	return i, err
+}
+
 const getChallengeByID = `-- name: GetChallengeByID :one
 SELECT id, creator_id, opponent_id, type, game, status, stake_amount, acceptance_deadline, accepted_at, started_at, match_deadline, ended_at, rejected_by, creator_stream_key, creator_playback_id, opponent_stream_key, opponent_playback_id, creator_asset_id, opponent_asset_id, creator_ready, opponent_ready, ai_winner_id, ai_score, ai_confidence, verdict_at, dispute_deadline, disputed_by, dispute_reason, disputed_at, resolved_by, resolution_note, resolved_at, created_at, updated_at FROM challenges WHERE id = $1 LIMIT 1
 `

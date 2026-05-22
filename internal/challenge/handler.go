@@ -175,8 +175,10 @@ func (h *Handler) GetLobby(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	// Friends system not yet built — include only the user's own ID so FRIENDS challenges are visible
 	friendIDs := []uuid.UUID{userID}
+	if rows, err := h.queries.GetFriendIDs(ctx, userID); err == nil {
+		friendIDs = append(friendIDs, rows...)
+	}
 
 	challenges, err := h.queries.GetOpenLobby(ctx, sqlcgen.GetOpenLobbyParams{
 		Column1: friendIDs,
