@@ -1,6 +1,7 @@
 package friends
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/olamilekan-fazn/backend/internal/notify"
 	"github.com/olamilekan-fazn/backend/internal/sqlcgen"
 )
 
@@ -98,6 +100,14 @@ func (h *Handler) SendRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sender, _ := h.queries.GetUserByID(ctx, userID)
+	go func() {
+		tokens, err := h.queries.GetPushTokensForUser(context.Background(), targetID)
+		if err == nil {
+			notify.SendToTokens(context.Background(), tokens, "Friend Request", sender.Username+" wants to be friends", map[string]string{"type": "friend_request"})
+		}
+	}()
+
 	respondJSON(w, http.StatusCreated, map[string]interface{}{
 		"status": "success",
 		"data":   friendship,
@@ -125,6 +135,15 @@ func (h *Handler) AcceptRequest(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusNotFound, "no pending friend request from this user")
 		return
 	}
+
+	me, _ := h.queries.GetUserByID(r.Context(), userID)
+	myUsername := me.Username
+	go func() {
+		tokens, err := h.queries.GetPushTokensForUser(context.Background(), targetID)
+		if err == nil {
+			notify.SendToTokens(context.Background(), tokens, "Friend Request Accepted", myUsername+" accepted your friend request", map[string]string{"type": "friend_accepted"})
+		}
+	}()
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"status": "success",

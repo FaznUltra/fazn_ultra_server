@@ -13,6 +13,7 @@ import (
 	"github.com/olamilekan-fazn/backend/internal/challenge"
 	"github.com/olamilekan-fazn/backend/internal/db"
 	"github.com/olamilekan-fazn/backend/internal/friends"
+	"github.com/olamilekan-fazn/backend/internal/notify"
 	"github.com/olamilekan-fazn/backend/internal/profile"
 	"github.com/olamilekan-fazn/backend/internal/wallet"
 )
@@ -64,6 +65,7 @@ func main() {
 	profileHandler := profile.NewHandler(pool)
 	challengeHandler := challenge.NewHandler(pool, walletHandler)
 	friendsHandler := friends.NewHandler(pool)
+	notifyHandler := notify.NewHandler(pool)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler(pool))
@@ -115,6 +117,10 @@ func main() {
 
 	// Presence (protected)
 	mux.HandleFunc("POST /presence/ping", auth.RequireAuth(friendsHandler.Ping))
+
+	// Notification token routes (protected)
+	mux.HandleFunc("POST /notifications/token", auth.RequireAuth(notifyHandler.RegisterToken))
+	mux.HandleFunc("DELETE /notifications/token", auth.RequireAuth(notifyHandler.DeleteToken))
 
 	// Paystack public routes (no auth — verified by signature or reference)
 	mux.HandleFunc("GET /wallet/deposit/callback", walletHandler.DepositCallback)

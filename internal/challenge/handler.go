@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/olamilekan-fazn/backend/internal/auth"
+	"github.com/olamilekan-fazn/backend/internal/notify"
 	"github.com/olamilekan-fazn/backend/internal/sqlcgen"
 	"github.com/olamilekan-fazn/backend/internal/wallet"
 	"github.com/sqlc-dev/pqtype"
@@ -321,6 +322,13 @@ func (h *Handler) AcceptChallenge(w http.ResponseWriter, r *http.Request) {
 		Metadata:  pqtype.NullRawMessage{RawMessage: meta, Valid: true},
 	})
 
+	go func() {
+		tokens, err := h.queries.GetPushTokensForUser(context.Background(), existing.CreatorID)
+		if err == nil {
+			notify.SendToTokens(context.Background(), tokens, "Challenge Accepted!", "Someone accepted your challenge. Confirm ready when you're in the game.", map[string]string{"type": "challenge_accepted", "challenge_id": challenge.ID.String()})
+		}
+	}()
+
 	respondJSON(w, http.StatusOK, map[string]interface{}{
 		"status":  "success",
 		"message": "challenge accepted — confirm ready when you're in the game",
@@ -436,6 +444,14 @@ func (h *Handler) ConfirmReady(w http.ResponseWriter, r *http.Request) {
 		}
 
 		challenge, _ = h.queries.StartChallenge(ctx, id)
+
+		go func() {
+			playerIDs := []uuid.UUID{challenge.CreatorID, challenge.OpponentID.UUID}
+			tokens, err := h.queries.GetPushTokensForUsers(context.Background(), playerIDs)
+			if err == nil {
+				notify.SendToTokens(context.Background(), tokens, "Match Started!", "Both players ready — your 90 minute match has begun. Go!", map[string]string{"type": "match_started", "challenge_id": challenge.ID.String()})
+			}
+		}()
 	}
 
 	respondJSON(w, http.StatusOK, map[string]interface{}{
@@ -581,6 +597,14 @@ func (h *Handler) SubmitVerdict(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	go func() {
+		playerIDs := []uuid.UUID{challenge.CreatorID, challenge.OpponentID.UUID}
+		tokens, err := h.queries.GetPushTokensForUsers(context.Background(), playerIDs)
+		if err == nil {
+			notify.SendToTokens(context.Background(), tokens, "Verdict In", "The AI has reviewed your match. Check the result — you have 1 hour to dispute.", map[string]string{"type": "verdict", "challenge_id": challenge.ID.String()})
+		}
+	}()
+
 	// Payout after 1hr dispute window
 	go func() {
 		time.Sleep(1 * time.Hour)
@@ -653,4 +677,7 @@ func (h *Handler) processPayout(challenge sqlcgen.Challenge) {
 	})
 
 	h.queries.CompleteChallenge(ctx, latest.ID)
+
+	tokens, _ := h.queries.GetPushTokensForUser(ctx, winnerID)
+	notify.SendToTokens(ctx, tokens, "You Won!", fmt.Sprintf("Your winnings have been credited to your wallet."), map[string]string{"type": "challenge_won", "challenge_id": latest.ID.String()})
 }

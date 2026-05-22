@@ -388,6 +388,13 @@ type Friendship struct {
 	UpdatedAt   time.Time        `json:"updated_at"`
 }
 
+type PushToken struct {
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Token     string    `json:"token"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type Transaction struct {
 	ID        uuid.UUID             `json:"id"`
 	UserID    uuid.UUID             `json:"user_id"`

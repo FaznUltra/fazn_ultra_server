@@ -27,6 +27,7 @@ type Querier interface {
 	DebitAvailable(ctx context.Context, arg DebitAvailableParams) (Wallet, error)
 	DeclineFriendRequest(ctx context.Context, arg DeclineFriendRequestParams) (Friendship, error)
 	DeductLocked(ctx context.Context, arg DeductLockedParams) (Wallet, error)
+	DeletePushToken(ctx context.Context, arg DeletePushTokenParams) error
 	DisputeChallenge(ctx context.Context, arg DisputeChallengeParams) (Challenge, error)
 	ExpireChallenges(ctx context.Context) ([]Challenge, error)
 	GetActiveChallenge(ctx context.Context, creatorID uuid.UUID) (GetActiveChallengeRow, error)
@@ -38,6 +39,8 @@ type Querier interface {
 	GetMyChallenges(ctx context.Context, arg GetMyChallengesParams) ([]Challenge, error)
 	GetOpenLobby(ctx context.Context, arg GetOpenLobbyParams) ([]Challenge, error)
 	GetPendingRequests(ctx context.Context, addresseeID uuid.UUID) ([]GetPendingRequestsRow, error)
+	GetPushTokensForUser(ctx context.Context, userID uuid.UUID) ([]string, error)
+	GetPushTokensForUsers(ctx context.Context, dollar_1 []uuid.UUID) ([]string, error)
 	GetTransactionByReference(ctx context.Context, reference string) (Transaction, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByGoogleID(ctx context.Context, googleID sql.NullString) (User, error)
@@ -46,6 +49,7 @@ type Querier interface {
 	GetWalletByUserID(ctx context.Context, userID uuid.UUID) (Wallet, error)
 	ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]Transaction, error)
 	LockFunds(ctx context.Context, arg LockFundsParams) (Wallet, error)
+	RegisterPushToken(ctx context.Context, arg RegisterPushTokenParams) error
 	RemoveFriend(ctx context.Context, arg RemoveFriendParams) error
 	ReopenChallenge(ctx context.Context, arg ReopenChallengeParams) (Challenge, error)
 	ResetPassword(ctx context.Context, arg ResetPasswordParams) (User, error)
