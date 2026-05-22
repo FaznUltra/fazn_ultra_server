@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/olamilekan-fazn/backend/internal/auth"
+	"github.com/olamilekan-fazn/backend/internal/challenge"
 	"github.com/olamilekan-fazn/backend/internal/db"
 	"github.com/olamilekan-fazn/backend/internal/profile"
 	"github.com/olamilekan-fazn/backend/internal/wallet"
@@ -60,6 +61,7 @@ func main() {
 	authHandler := auth.NewHandler(pool)
 	walletHandler := wallet.NewHandler(pool)
 	profileHandler := profile.NewHandler(pool)
+	challengeHandler := challenge.NewHandler(pool, walletHandler)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler(pool))
@@ -88,6 +90,18 @@ func main() {
 	mux.HandleFunc("PATCH /profile/me", auth.RequireAuth(profileHandler.UpdateMyProfile))
 	mux.HandleFunc("POST /profile/avatar/upload-url", auth.RequireAuth(profileHandler.GetAvatarUploadURL))
 	mux.HandleFunc("GET /profile/{username}", profileHandler.GetPublicProfile)
+
+	// Challenge routes (protected)
+	mux.HandleFunc("POST /challenges", auth.RequireAuth(challengeHandler.CreateChallenge))
+	mux.HandleFunc("GET /challenges", auth.RequireAuth(challengeHandler.GetLobby))
+	mux.HandleFunc("GET /challenges/my", auth.RequireAuth(challengeHandler.GetMyChallenges))
+	mux.HandleFunc("GET /challenges/{id}", auth.RequireAuth(challengeHandler.GetChallenge))
+	mux.HandleFunc("POST /challenges/{id}/accept", auth.RequireAuth(challengeHandler.AcceptChallenge))
+	mux.HandleFunc("POST /challenges/{id}/reject", auth.RequireAuth(challengeHandler.RejectChallenge))
+	mux.HandleFunc("POST /challenges/{id}/ready", auth.RequireAuth(challengeHandler.ConfirmReady))
+	mux.HandleFunc("POST /challenges/{id}/cancel", auth.RequireAuth(challengeHandler.CancelChallenge))
+	mux.HandleFunc("POST /challenges/{id}/dispute", auth.RequireAuth(challengeHandler.DisputeChallenge))
+	mux.HandleFunc("POST /challenges/{id}/verdict", challengeHandler.SubmitVerdict) // internal only, guarded by X-Internal-Secret
 
 	// Paystack public routes (no auth — verified by signature or reference)
 	mux.HandleFunc("GET /wallet/deposit/callback", walletHandler.DepositCallback)

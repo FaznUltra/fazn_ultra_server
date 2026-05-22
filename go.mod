@@ -16,6 +16,7 @@ require (
 	github.com/jackc/pgx/v5 v5.9.2 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/lib/pq v1.12.3 // indirect
 	github.com/resend/resend-go/v2 v2.28.0 // indirect
 	github.com/sqlc-dev/pqtype v0.3.0 // indirect
 	golang.org/x/crypto v0.51.0 // indirect

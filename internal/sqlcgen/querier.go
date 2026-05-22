@@ -12,14 +12,25 @@ import (
 )
 
 type Querier interface {
+	AcceptChallenge(ctx context.Context, arg AcceptChallengeParams) (Challenge, error)
+	AddRejectedBy(ctx context.Context, arg AddRejectedByParams) (Challenge, error)
+	AutoSubmitExpiredMatches(ctx context.Context) ([]Challenge, error)
+	CancelChallenge(ctx context.Context, arg CancelChallengeParams) (Challenge, error)
+	CompleteChallenge(ctx context.Context, id uuid.UUID) (Challenge, error)
 	CountTransactions(ctx context.Context, arg CountTransactionsParams) (int64, error)
+	CreateChallenge(ctx context.Context, arg CreateChallengeParams) (Challenge, error)
 	CreateTransaction(ctx context.Context, arg CreateTransactionParams) (Transaction, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateWallet(ctx context.Context, userID uuid.UUID) (Wallet, error)
 	CreditAvailable(ctx context.Context, arg CreditAvailableParams) (Wallet, error)
 	DebitAvailable(ctx context.Context, arg DebitAvailableParams) (Wallet, error)
 	DeductLocked(ctx context.Context, arg DeductLockedParams) (Wallet, error)
+	DisputeChallenge(ctx context.Context, arg DisputeChallengeParams) (Challenge, error)
+	ExpireChallenges(ctx context.Context) ([]Challenge, error)
 	GetBankAccount(ctx context.Context, userID uuid.UUID) (BankAccount, error)
+	GetChallengeByID(ctx context.Context, id uuid.UUID) (Challenge, error)
+	GetMyChallenges(ctx context.Context, arg GetMyChallengesParams) ([]Challenge, error)
+	GetOpenLobby(ctx context.Context, arg GetOpenLobbyParams) ([]Challenge, error)
 	GetTransactionByReference(ctx context.Context, reference string) (Transaction, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByGoogleID(ctx context.Context, googleID sql.NullString) (User, error)
@@ -28,11 +39,20 @@ type Querier interface {
 	GetWalletByUserID(ctx context.Context, userID uuid.UUID) (Wallet, error)
 	ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]Transaction, error)
 	LockFunds(ctx context.Context, arg LockFundsParams) (Wallet, error)
+	ReopenChallenge(ctx context.Context, arg ReopenChallengeParams) (Challenge, error)
 	ResetPassword(ctx context.Context, arg ResetPasswordParams) (User, error)
+	ResolveDispute(ctx context.Context, arg ResolveDisputeParams) (Challenge, error)
 	SaveBankAccount(ctx context.Context, arg SaveBankAccountParams) (BankAccount, error)
+	SetCreatorAsset(ctx context.Context, arg SetCreatorAssetParams) error
+	SetCreatorReady(ctx context.Context, arg SetCreatorReadyParams) (Challenge, error)
 	SetEmailVerified(ctx context.Context, id uuid.UUID) error
+	SetMuxStreams(ctx context.Context, arg SetMuxStreamsParams) (Challenge, error)
 	SetOTP(ctx context.Context, arg SetOTPParams) error
+	SetOpponentAsset(ctx context.Context, arg SetOpponentAssetParams) error
+	SetOpponentReady(ctx context.Context, arg SetOpponentReadyParams) (Challenge, error)
 	SetResetToken(ctx context.Context, arg SetResetTokenParams) error
+	StartChallenge(ctx context.Context, id uuid.UUID) (Challenge, error)
+	SubmitVerdict(ctx context.Context, arg SubmitVerdictParams) (Challenge, error)
 	UnlockFunds(ctx context.Context, arg UnlockFundsParams) (Wallet, error)
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (User, error)
 	UpdateTransactionStatus(ctx context.Context, arg UpdateTransactionStatusParams) (Transaction, error)

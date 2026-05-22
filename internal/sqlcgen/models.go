@@ -14,6 +14,142 @@ import (
 	"github.com/sqlc-dev/pqtype"
 )
 
+type ChallengeGame string
+
+const (
+	ChallengeGameEFOOTBALL ChallengeGame = "EFOOTBALL"
+	ChallengeGameDLS       ChallengeGame = "DLS"
+)
+
+func (e *ChallengeGame) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ChallengeGame(s)
+	case string:
+		*e = ChallengeGame(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ChallengeGame: %T", src)
+	}
+	return nil
+}
+
+type NullChallengeGame struct {
+	ChallengeGame ChallengeGame `json:"challenge_game"`
+	Valid         bool          `json:"valid"` // Valid is true if ChallengeGame is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullChallengeGame) Scan(value interface{}) error {
+	if value == nil {
+		ns.ChallengeGame, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ChallengeGame.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullChallengeGame) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ChallengeGame), nil
+}
+
+type ChallengeStatus string
+
+const (
+	ChallengeStatusOPEN          ChallengeStatus = "OPEN"
+	ChallengeStatusACCEPTED      ChallengeStatus = "ACCEPTED"
+	ChallengeStatusINPROGRESS    ChallengeStatus = "IN_PROGRESS"
+	ChallengeStatusAIREVIEW      ChallengeStatus = "AI_REVIEW"
+	ChallengeStatusVERDICT       ChallengeStatus = "VERDICT"
+	ChallengeStatusCOMPLETED     ChallengeStatus = "COMPLETED"
+	ChallengeStatusDISPUTED      ChallengeStatus = "DISPUTED"
+	ChallengeStatusADMINRESOLVED ChallengeStatus = "ADMIN_RESOLVED"
+	ChallengeStatusCANCELLED     ChallengeStatus = "CANCELLED"
+	ChallengeStatusEXPIRED       ChallengeStatus = "EXPIRED"
+	ChallengeStatusREFUNDED      ChallengeStatus = "REFUNDED"
+)
+
+func (e *ChallengeStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ChallengeStatus(s)
+	case string:
+		*e = ChallengeStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ChallengeStatus: %T", src)
+	}
+	return nil
+}
+
+type NullChallengeStatus struct {
+	ChallengeStatus ChallengeStatus `json:"challenge_status"`
+	Valid           bool            `json:"valid"` // Valid is true if ChallengeStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullChallengeStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.ChallengeStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ChallengeStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullChallengeStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ChallengeStatus), nil
+}
+
+type ChallengeType string
+
+const (
+	ChallengeTypePUBLIC  ChallengeType = "PUBLIC"
+	ChallengeTypeFRIENDS ChallengeType = "FRIENDS"
+	ChallengeTypeDIRECT  ChallengeType = "DIRECT"
+)
+
+func (e *ChallengeType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ChallengeType(s)
+	case string:
+		*e = ChallengeType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ChallengeType: %T", src)
+	}
+	return nil
+}
+
+type NullChallengeType struct {
+	ChallengeType ChallengeType `json:"challenge_type"`
+	Valid         bool          `json:"valid"` // Valid is true if ChallengeType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullChallengeType) Scan(value interface{}) error {
+	if value == nil {
+		ns.ChallengeType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ChallengeType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullChallengeType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ChallengeType), nil
+}
+
 type GamePreference string
 
 const (
@@ -161,6 +297,43 @@ type BankAccount struct {
 	AccountName           string    `json:"account_name"`
 	PaystackRecipientCode string    `json:"paystack_recipient_code"`
 	CreatedAt             time.Time `json:"created_at"`
+}
+
+type Challenge struct {
+	ID                 uuid.UUID       `json:"id"`
+	CreatorID          uuid.UUID       `json:"creator_id"`
+	OpponentID         uuid.NullUUID   `json:"opponent_id"`
+	Type               ChallengeType   `json:"type"`
+	Game               ChallengeGame   `json:"game"`
+	Status             ChallengeStatus `json:"status"`
+	StakeAmount        int64           `json:"stake_amount"`
+	AcceptanceDeadline time.Time       `json:"acceptance_deadline"`
+	AcceptedAt         sql.NullTime    `json:"accepted_at"`
+	StartedAt          sql.NullTime    `json:"started_at"`
+	MatchDeadline      sql.NullTime    `json:"match_deadline"`
+	EndedAt            sql.NullTime    `json:"ended_at"`
+	RejectedBy         []uuid.UUID     `json:"rejected_by"`
+	CreatorStreamKey   sql.NullString  `json:"creator_stream_key"`
+	CreatorPlaybackID  sql.NullString  `json:"creator_playback_id"`
+	OpponentStreamKey  sql.NullString  `json:"opponent_stream_key"`
+	OpponentPlaybackID sql.NullString  `json:"opponent_playback_id"`
+	CreatorAssetID     sql.NullString  `json:"creator_asset_id"`
+	OpponentAssetID    sql.NullString  `json:"opponent_asset_id"`
+	CreatorReady       bool            `json:"creator_ready"`
+	OpponentReady      bool            `json:"opponent_ready"`
+	AiWinnerID         uuid.NullUUID   `json:"ai_winner_id"`
+	AiScore            sql.NullString  `json:"ai_score"`
+	AiConfidence       sql.NullString  `json:"ai_confidence"`
+	VerdictAt          sql.NullTime    `json:"verdict_at"`
+	DisputeDeadline    sql.NullTime    `json:"dispute_deadline"`
+	DisputedBy         uuid.NullUUID   `json:"disputed_by"`
+	DisputeReason      sql.NullString  `json:"dispute_reason"`
+	DisputedAt         sql.NullTime    `json:"disputed_at"`
+	ResolvedBy         uuid.NullUUID   `json:"resolved_by"`
+	ResolutionNote     sql.NullString  `json:"resolution_note"`
+	ResolvedAt         sql.NullTime    `json:"resolved_at"`
+	CreatedAt          time.Time       `json:"created_at"`
+	UpdatedAt          time.Time       `json:"updated_at"`
 }
 
 type Transaction struct {
